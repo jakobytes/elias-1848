@@ -1,0 +1,12 @@
+[submodule "data/raw/skvr"]
+	path = data/raw/skvr
+	url = https://github.com/sks190/SKVR
+[submodule "data/raw/erab"]
+	path = data/raw/erab
+	url = https://github.com/rahvaluule/erab
+[submodule "data/raw/jr"]
+	path = data/raw/jr
+	url = git@github.com:sks190/JR
+[submodule "data/raw/kr"]
+	path = data/raw/kr
+	url = git@github.com:sks190/kr_FILTER
