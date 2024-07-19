@@ -1,0 +1,9 @@
+csvkit
+geopandas
+lxml
+pandas
+scipy
+torch
+tqdm
+git+https://github.com/hsci-r/shortsim
+git+https://github.com/maciejjan/matrix-align
