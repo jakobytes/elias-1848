@@ -172,7 +172,7 @@ def parse_arguments():
         help='The size (`n`) of the n-grams (default: 2, i.e. ngrams).')
     parser.add_argument(
         '-j', '--job-id', type=int, default=None,
-        help='Job number if using multi-process parallelization.')
+        help='Zero-based job number if using multi-process parallelization (0 <= job-id < jobs).')
     parser.add_argument(
         '-J', '--jobs', type=int, default=None,
         help='Overall number of jobs if using multi-process parallelization.')
