@@ -302,4 +302,7 @@ $(work_dir)/verses_sim/v_clust.default.tsv: \
 # POEMS SIMILARITY AND CLUSTERING
 ###################################################################
 
-# TODO
+$(DATA_DIR)/p_sim.csv: $(DATA_DIR)/verses_cl.csv
+	$(python) code/poem_sim.py -t 0.5 -p -g -d 450 -i $< -o $@ \
+	  -L DEBUG --logfile $(work_dir)/poem_sim.log
+
