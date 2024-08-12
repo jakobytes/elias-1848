@@ -6,6 +6,7 @@ import sys
 
 reader = csv.DictReader(sys.stdin)
 writer = csv.DictWriter(sys.stdout, reader.fieldnames)
+writer.writeheader()
 data = []
 for r in reader:
     if data and data[-1][-1]['poem_id'] == r['poem_id']:
