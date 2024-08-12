@@ -310,5 +310,6 @@ $(work_dir)/verses_cl_by_length.csv: $(DATA_DIR)/verses_cl.csv
 
 $(DATA_DIR)/p_sim.csv: $(work_dir)/verses_cl_by_length.csv
 	$(python) code/poem_sim.py -t 0.5 -p -r -g -d 450 -i $< -o $@ \
+	  --sim-raw-thr 1 --sim-onesided-thr 0.1 --sim-sym-thr 0 \
 	  -L DEBUG --logfile $(work_dir)/poem_sim.log
 
