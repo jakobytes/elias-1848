@@ -302,7 +302,13 @@ $(work_dir)/verses_sim/v_clust.default.tsv: \
 # POEMS SIMILARITY AND CLUSTERING
 ###################################################################
 
-$(DATA_DIR)/p_sim.csv: $(DATA_DIR)/verses_cl.csv
+# Before similarity computation, sort the poems from longest to shortest.
+# This is done for optimization purposes: the poem_sim script works
+# faster this way.
+$(work_dir)/verses_cl_by_length.csv: $(DATA_DIR)/verses_cl.csv
+	$(python) code/sort_poems_by_length.py < $< > $@
+
+$(DATA_DIR)/p_sim.csv: $(work_dir)/verses_cl_by_length.csv
 	$(python) code/poem_sim.py -t 0.5 -p -g -d 450 -i $< -o $@ \
 	  -L DEBUG --logfile $(work_dir)/poem_sim.log
 
