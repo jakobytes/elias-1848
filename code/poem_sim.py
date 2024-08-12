@@ -15,7 +15,7 @@ from matrix_align import matrix_align
 # The maximum size of the alignment matrix between one poem and the rest.
 # If the matrix is too large, it will be split and computed in parts.
 # Change this to a lower value if you're getting out-of-memory errors.
-MAX_SIZE = 5368709120               # this many 16-bit numbers =~ 10G
+MAX_SIZE = 3758096384               # this many 16-bit numbers =~ 7G
 
 
 def read_input(filename):
