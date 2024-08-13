@@ -291,6 +291,12 @@ $(work_dir)/verse_sim/verses_cl.list.txt: $(DATA_DIR)/verses_cl.csv
 $(DATA_DIR)/v_sim.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
 	shortsim-ngrcos -t 0.75 -g -p -d 450 < $< > $@
 
+$(work_dir)/v_sim.sqrt.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
+	shortsim-ngrcos -w sqrt -t 0.75 -g -p -d 450 < $< > $@
+
+$(work_dir)/v_sim.binary.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
+	shortsim-ngrcos -w binary -t 0.75 -g -p -d 450 < $< > $@
+
 $(work_dir)/verses_sim/v_clust.default.tsv: \
   $(work_dir)/verses_sim/verses_cl.list.txt \
   $(DATA_DIR)/v_sim.tsv
