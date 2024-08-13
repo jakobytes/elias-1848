@@ -297,12 +297,70 @@ $(work_dir)/v_sim.sqrt.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
 $(work_dir)/v_sim.binary.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
 	shortsim-ngrcos -w binary -t 0.75 -g -p -d 450 < $< > $@
 
-$(work_dir)/verses_sim/v_clust.default.tsv: \
-  $(work_dir)/verses_sim/verses_cl.list.txt \
+$(work_dir)/verse_sim/v_clust.default.tsv: \
+  $(work_dir)/verse_sim/verses_cl.list.txt \
   $(DATA_DIR)/v_sim.tsv
 	echo \
-	| cat $(work_dir)/verses_sim/verses_cl.list.txt - $(DATA_DIR)/v_sim.tsv \
-	| shortsim-cluster -t 0.8 > $@
+	| cat $(work_dir)/verse_sim/verses_cl.list.txt - $(DATA_DIR)/v_sim.tsv \
+	| shortsim-cluster -s 0.8 > $@
+
+$(work_dir)/verse_sim/v_clust.sqrt.tsv: \
+  $(work_dir)/verse_sim/verses_cl.list.txt \
+  $(work_dir)/v_sim.sqrt.tsv
+	echo \
+	| cat $(work_dir)/verse_sim/verses_cl.list.txt - $(work_dir)/v_sim.sqrt.tsv \
+	| shortsim-cluster -s 0.8 > $@
+
+$(work_dir)/verse_sim/v_clust.binary.tsv: \
+  $(work_dir)/verse_sim/verses_cl.list.txt \
+  $(work_dir)/v_sim.binary.tsv
+	echo \
+	| cat $(work_dir)/verse_sim/verses_cl.list.txt - $(work_dir)/v_sim.binary.tsv \
+	| shortsim-cluster -s 0.8 > $@
+
+$(work_dir)/verse_sim/v_clust.tight.tsv: \
+  $(work_dir)/verse_sim/verses_cl.list.txt \
+  $(DATA_DIR)/v_sim.tsv
+	echo \
+	| cat $(work_dir)/verse_sim/verses_cl.list.txt - $(DATA_DIR)/v_sim.tsv \
+	| shortsim-cluster -s 0.85 > $@
+
+$(work_dir)/verse_sim/v_clust.loose.tsv: \
+  $(work_dir)/verse_sim/verses_cl.list.txt \
+  $(DATA_DIR)/v_sim.tsv
+	echo \
+	| cat $(work_dir)/verse_sim/verses_cl.list.txt - $(DATA_DIR)/v_sim.tsv \
+	| shortsim-cluster -s 0.75 > $@
+
+$(work_dir)/verse_sim/v_clust.tight-binary.tsv: \
+  $(work_dir)/verse_sim/verses_cl.list.txt \
+  $(work_dir)/v_sim.binary.tsv
+	echo \
+	| cat $(work_dir)/verse_sim/verses_cl.list.txt - $(work_dir)/v_sim.binary.tsv \
+	| shortsim-cluster -s 0.85 > $@
+
+$(DATA_DIR)/v_clust.tsv: \
+  $(work_dir)/verse_sim/v_clust.default.tsv \
+  $(work_dir)/verse_sim/v_clust.sqrt.tsv \
+  $(work_dir)/verse_sim/v_clust.binary.tsv \
+  $(work_dir)/verse_sim/v_clust.tight.tsv \
+  $(work_dir)/verse_sim/v_clust.loose.tsv \
+  $(work_dir)/verse_sim/v_clust.tight-binary.tsv
+	sed 's/^/0\t/' $(work_dir)/verse_sim/v_clust.default.tsv > $@
+	sed 's/^/1\t/' $(work_dir)/verse_sim/v_clust.sqrt.tsv >> $@
+	sed 's/^/2\t/' $(work_dir)/verse_sim/v_clust.binary.tsv >> $@
+	sed 's/^/3\t/' $(work_dir)/verse_sim/v_clust.tight.tsv >> $@
+	sed 's/^/4\t/' $(work_dir)/verse_sim/v_clust.loose.tsv >> $@
+	sed 's/^/5\t/' $(work_dir)/verse_sim/v_clust.tight-binary.tsv >> $@
+
+$(DATA_DIR)/v_clusterings.csv:
+	echo 'clustering_id,name,description' > $@
+	echo '0,default,' >> $@
+	echo '1,sqrt,"sqrt weighting"' >> $@
+	echo '2,binary,"binary weighting"' >> $@
+	echo '3,tight,"threshold = 0.85"' >> $@
+	echo '4,loose,"threshold = 0.75"' >> $@
+	echo '5,tight-binary,"threshold = 0.85, binary weighting"' >> $@
 
 ###################################################################
 # POEMS SIMILARITY AND CLUSTERING
