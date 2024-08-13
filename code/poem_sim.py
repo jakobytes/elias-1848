@@ -23,7 +23,7 @@ def read_input(filename):
     with open(filename) as fp:
         reader = csv.DictReader(fp)
         for line in reader:
-            verses.append(((line['poem_id'], line['pos']), line['text']))
+            verses.append((line['poem_id'], line['pos'], line['text']))
     return verses
 
 
@@ -111,29 +111,29 @@ def compute_similarities(
             pbar.update()
 
 
-def format_als_for_output(als, p1_idx, p2_idx, poem_ids, v_ids, v_texts,
+def format_als_for_output(als, p1_idx, p2_idx, poem_ids, verses,
                           add_texts=False):
     p1_id = poem_ids[p1_idx]
     p2_id = poem_ids[p2_idx]
     if add_texts:
         return itertools.chain(
-                ((p1_id, v_ids[poem_boundaries[p1_idx]+pos1][1],
-                  v_texts[poem_boundaries[p1_idx]+pos1],
-                  p2_id, v_ids[poem_boundaries[p2_idx]+pos2][1],
-                  v_texts[poem_boundaries[p2_idx]+pos2], w) \
+                ((p1_id, verses[poem_boundaries[p1_idx]+pos1][1],
+                  verses[poem_boundaries[p1_idx]+pos1][2],
+                  p2_id, verses[poem_boundaries[p2_idx]+pos2][1],
+                  verses[poem_boundaries[p2_idx]+pos2][2], w) \
                  for pos1, pos2, w in als),
-                ((p2_id, v_ids[poem_boundaries[p2_idx]+pos2][1],
-                  v_texts[poem_boundaries[p2_idx]+pos2],
-                  p1_id, v_ids[poem_boundaries[p1_idx]+pos1][1], \
-                  v_texts[poem_boundaries[p1_idx]+pos1], w)
+                ((p2_id, verses[poem_boundaries[p2_idx]+pos2][1],
+                  verses[poem_boundaries[p2_idx]+pos2][2],
+                  p1_id, verses[poem_boundaries[p1_idx]+pos1][1], \
+                  verses[poem_boundaries[p1_idx]+pos1][2], w)
                  for pos1, pos2, w in als))
     else:
         return itertools.chain(
-                ((p1_id, v_ids[poem_boundaries[p1_idx]+pos1][1],
-                  p2_id, v_ids[poem_boundaries[p2_idx]+pos2][1], w) \
+                ((p1_id, verses[poem_boundaries[p1_idx]+pos1][1],
+                  p2_id, verses[poem_boundaries[p2_idx]+pos2][1], w) \
                  for pos1, pos2, w in als),
-                ((p2_id, v_ids[poem_boundaries[p2_idx]+pos2][1],
-                  p1_id, v_ids[poem_boundaries[p1_idx]+pos1][1], w) \
+                ((p2_id, verses[poem_boundaries[p2_idx]+pos2][1],
+                  p1_id, verses[poem_boundaries[p1_idx]+pos1][1], w) \
                  for pos1, pos2, w in als))
 
 
@@ -219,14 +219,14 @@ if __name__ == '__main__':
         verses = move_to_beginning(verses, args.regex)
     
     logging.info('starting vectorization')
-    v_ids, v_texts, ngram_ids, m = \
-        vectorize(verses, n=args.n, dim=args.dim, weighting=args.weighting)
+    m = vectorize([v[2] for v in verses], n=args.n, dim=args.dim,
+                  weighting=args.weighting)
     m = torch.from_numpy(m)
     logging.info('vectorization completed')
     poem_boundaries = [0] \
-        + [i+1 for i in range(len(v_ids)-1) if v_ids[i][0] != v_ids[i+1][0]] \
-        + [len(v_ids)]
-    poem_ids = [v_ids[i][0] for i in poem_boundaries[:-1]]
+        + [i+1 for i in range(len(verses)-1) if verses[i][0] != verses[i+1][0]] \
+        + [len(verses)]
+    poem_ids = [verses[i][0] for i in poem_boundaries[:-1]]
     
     if args.use_gpu:
         logging.info('using torch on GPU')
@@ -290,7 +290,7 @@ if __name__ == '__main__':
                 if a_writer is not None:
                     rows = format_als_for_output(
                       als, p1_idx, p2_idx,
-                      poem_ids, v_ids, v_texts, add_texts=args.print_texts)
+                      poem_ids, verses, add_texts=args.print_texts)
                     a_writer.writerows(rows)
         else:
             with open(args.output_file, 'w+') as outfp:
@@ -304,7 +304,7 @@ if __name__ == '__main__':
                     if a_writer is not None:
                         rows = format_als_for_output(
                           als, p1_idx, p2_idx,
-                          poem_ids, v_ids, v_texts, add_texts=args.print_texts)
+                          poem_ids, verses, add_texts=args.print_texts)
                         a_writer.writerows(rows)
     
         t2 = time.time()
