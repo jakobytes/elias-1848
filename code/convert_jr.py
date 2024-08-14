@@ -108,6 +108,9 @@ def read_inputs(filenames, prefix):
     '''Transforms the XML files to an iterator over rows, each row
        corresponding to one ITEM.'''
     for filename in filenames:
+        if not P.isfile(filename):
+            logging.warning('Skipping "{}": file does not exist'.format(filename))
+            continue
         for node in ET.parse(filename).getroot():
             meta = node.xpath('./META')
             text = node.xpath('./TEXT')
