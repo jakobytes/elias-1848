@@ -378,3 +378,11 @@ $(DATA_DIR)/p_sim.csv: $(work_dir)/verses_cl_by_length.csv
 	  --sim-raw-thr 1 --sim-onesided-thr 0.1 --sim-sym-thr 0 \
 	  -L DEBUG --logfile $(work_dir)/poem_sim.log
 
+$(DATA_DIR)/p_clust.tsv: $(DATA_DIR)/p_sim.csv
+	csvcut -c p1_id,p2_id,sim $< \
+	| tail -n +2 | csvformat -T | sort > $(work_dir)/p_sim.edges.tsv
+	cut -f 1 $(work_dir)/p_sim.edges.tsv | uniq > $(work_dir)/p_sim.nodes.tsv
+	echo | cat $(work_dir)/p_sim.nodes.tsv - $(work_dir)/p_sim.edges.tsv \
+	| shortsim-cluster -s 0.1 > $@
+	rm $(work_dir)/p_sim.nodes.tsv $(work_dir)/p_sim.edges.tsv
+
