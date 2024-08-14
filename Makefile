@@ -106,9 +106,11 @@ $(work_dir)/kr/verses.csv:
 $(work_dir)/kr/meta.csv:     $(work_dir)/kr/verses.csv
 $(work_dir)/kr/raw_meta.csv: $(work_dir)/kr/verses.csv
 
-$(work_dir)/kr/collectors.csv: $(raw_dir)/kr/collectors.csv
+$(work_dir)/kr/collectors.csv:
 	mkdir -p $(work_dir)/kr
-	cp $< $@
+	( [ -f "$(raw_dir)/kr/collectors.csv" ] \
+	  && cp $(raw_dir)/kr/collectors.csv $@ ) \
+	|| ( echo "collector_id,collector_name" > $@ )
 
 $(work_dir)/kr/poem_place.csv: $(work_dir)/kr/meta.csv
 	csvcut -c poem_id,place_id $< | csvgrep -c place_id -r '^.+$$' > $@
@@ -116,20 +118,26 @@ $(work_dir)/kr/poem_place.csv: $(work_dir)/kr/meta.csv
 $(work_dir)/kr/poem_collector.csv: $(work_dir)/kr/meta.csv
 	csvcut -c poem_id,collector_id $< | csvgrep -c collector_id -r '^.+$$' > $@
 
-$(work_dir)/kr/poem_types.csv: $(raw_dir)/kr/kanteletar/poem_category.csv
+$(work_dir)/kr/poem_types.csv:
 	mkdir -p $(work_dir)/kr
-	cp $< $@
+	( [ -f "$(raw_dir)/kr/kanteletar/poem_category.csv" ] \
+	  && cp $(raw_dir)/kr/kanteletar/poem_category.csv $@ ) \
+	|| ( echo "poem_id,type_id,type_is_minor" > $@ )
 
 $(work_dir)/kr/poem_year.csv: $(work_dir)/kr/meta.csv
 	csvcut -c poem_id,year $< | csvgrep -c year -r '^.+$$' > $@
 
-$(work_dir)/kr/places.csv: $(raw_dir)/kr/places.csv
+$(work_dir)/kr/places.csv:
 	mkdir -p $(work_dir)/kr
-	cp $< $@
+	( [ -f "$(raw_dir)/kr/places.csv" ] \
+	  && cp $(raw_dir)/kr/places.csv $@ ) \
+	|| ( echo "place_id,place_name,place_type,place_parent_id" > $@ )
 
-$(work_dir)/kr/types.csv: $(raw_dir)/kr/kanteletar/categories.csv
+$(work_dir)/kr/types.csv:
 	mkdir -p $(work_dir)/kr
-	cp $< $@
+	( [ -f "$(raw_dir)/kr/kanteletar/categories.csv" ] \
+	  && cp $(raw_dir)/kr/kanteletar/categories.csv $@ ) \
+	|| ( echo "type_id,type_name,type_description,type_parent_id" > $@ )
 
 # Verse cleaning
 $(work_dir)/%/verses_cl.csv: $(work_dir)/%/verses.csv
