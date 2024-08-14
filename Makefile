@@ -167,6 +167,7 @@ combined: \
   $(DATA_DIR)/poem_types.csv \
   $(DATA_DIR)/polygon_to_place.csv \
   $(DATA_DIR)/raw_meta.csv \
+  $(DATA_DIR)/refs.csv \
   $(DATA_DIR)/types.csv \
   $(DATA_DIR)/verses.csv \
   $(DATA_DIR)/verses_cl.csv \
