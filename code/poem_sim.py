@@ -272,16 +272,16 @@ if __name__ == '__main__':
         alfp = open(args.alignments_file, 'w+')
         a_writer = csv.writer(alfp, delimiter=',', lineterminator='\n')
         if args.print_texts:
-            a_writer.writerow(('p1_id', 'pos1', 'text1',
-                               'p2_id', 'pos2', 'text2', 'sim'))
+            a_writer.writerow(('poem_id_1', 'pos1', 'text1',
+                               'poem_id_2', 'pos2', 'text2', 'sim'))
         else:
-            a_writer.writerow(('p1_id', 'pos1', 'p2_id', 'pos2', 'sim'))
+            a_writer.writerow(('poem_id_1', 'pos1', 'poem_id_2', 'pos2', 'sim'))
 
     try:
         t1 = time.time()
         if args.output_file is None:
             writer = csv.writer(sys.stdout, delimiter=',', lineterminator='\n')
-            writer.writerow(('p1_id', 'p2_id', 'sim_raw', 'sim_l', 'sim_r', 'sim'))
+            writer.writerow(('poem_id_1', 'poem_id_2', 'sim_raw', 'sim_l', 'sim_r', 'sim'))
             for p1_idx, p2_idx, sim_raw, sim_l, sim_r, sim, als in sims:
                 writer.writerow((poem_ids[p1_idx], poem_ids[p2_idx],
                                  sim_raw, sim_l, sim_r, sim))
@@ -295,7 +295,7 @@ if __name__ == '__main__':
         else:
             with open(args.output_file, 'w+') as outfp:
                 writer = csv.writer(outfp, delimiter=',', lineterminator='\n')
-                writer.writerow(('p1_id', 'p2_id', 'sim_raw', 'sim_l', 'sim_r', 'sim'))
+                writer.writerow(('poem_id_1', 'poem_id_2', 'sim_raw', 'sim_l', 'sim_r', 'sim'))
                 for p1_idx, p2_idx, sim_raw, sim_l, sim_r, sim, als in sims:
                     writer.writerow((poem_ids[p1_idx], poem_ids[p2_idx],
                                      sim_raw, sim_l, sim_r, sim))
