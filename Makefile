@@ -258,6 +258,10 @@ $(DATA_DIR)/refs.csv: \
   $(work_dir)/jr/refs.csv
 	csvstack $^ > $@
 
+$(DATA_DIR)/runoregi_pages.tsv: $(raw_dir)/runoregi_pages.json
+	jq -r '.[] | [.view, .position, .title, (.helptext | join("\n")),'\
+	'             (.content | join("\n"))] | @tsv' $< > $@
+
 # Here we only keep columns that are present in all subcorpora.
 # (`type_comparison` is only present in SKVR)
 $(DATA_DIR)/types.csv: \
