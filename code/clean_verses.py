@@ -15,6 +15,7 @@ def clean(string):
     string = re.sub('^\W+ ', '', string)
     string = re.sub('\s+', '_', string)
     string = re.sub('\W', '', string)
+    string = re.sub('_', ' ', string)
     return string
 
 
