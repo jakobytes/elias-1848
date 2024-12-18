@@ -10,15 +10,15 @@ The pipeline produces a set of tables in CSV format that is stored in
 ## Installation and running
 
 After cloning this repository, initialize the Git submodules for the
-source data. Note that only the SKVR and ERAB collections are public
-right now -- thus the directories `data/raw/jr` and `data/raw/kr`
-should remain empty unless you get access to the Finnish Literature
-Society's private repositories.
+source data using the command:
+```
+git submodule update --init --recursive
+```
 
-Further, install the Python dependencies:
-```
-pip3 install -r requirements.txt
-```
+Further, install the Python dependencies. The preferred way of doing it
+is through Anaconda - use the environment file `env.yml`. For CSC
+computing clusters, it is recommended to use
+[Tykkky](https://docs.csc.fi/computing/containers/tykky/).
 
 The different steps of the pipeline are called using GNU Make. The
 environment variable `DATA_DIR` should be set to the path of the output
