@@ -311,7 +311,7 @@ $(DATA_DIR)/word_occ.csv: \
 
 $(work_dir)/verse_sim/verses_cl.list.txt: $(DATA_DIR)/verses_cl.csv
 	mkdir -p $(work_dir)/verse_sim
-	csvcut -c text $< | tail -n +2 | sort -u > $@
+	csvcut -c text $< | tail -n +2 | sort -u | sed '/^\s*$$/d' > $@
 
 $(DATA_DIR)/v_sim.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
 	shortsim-ngrcos -t 0.75 -g -p -d 450 < $< > $@
