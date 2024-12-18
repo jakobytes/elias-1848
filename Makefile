@@ -152,8 +152,8 @@ $(work_dir)/%/verses_cl.csv: $(work_dir)/%/verses.csv
 # Tokenization of the cleaned verses table: just split on word boundaries.
 $(work_dir)/%/word_occ.csv: $(work_dir)/%/verses_cl.csv
 	awk -F, 'NR == 1 { print "poem_id,pos,word_pos,text"; }'\
-	' NR > 1 { gsub("_+", "_", $$3);'\
-	'         split($$3, a, "_");'\
+	' NR > 1 { gsub(" +", " ", $$3);'\
+	'         split($$3, a, " ");'\
 	'         for (i in a) { print $$1","$$2","i","a[i]; } }'\
 	  $< > $@
 
