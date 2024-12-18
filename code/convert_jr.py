@@ -14,6 +14,14 @@ from common_xml_functions import \
 # MAPPING FUNCTIONS
 #########################################################################
 
+def map_poems(item):
+    if 'metaxml' in item:
+        n_id = item['metaxml'].find('ID')
+    display_name = 'JR {}'.format(n_id.text) if n_id is not None else None
+    yield { 'poem_id': item['poem_id'],
+            'collection': item['collection'],
+            'display_name': display_name }
+
 def map_verses(item):
     for i, node in enumerate(item['textxml'], 1):
         # remove <O> tags together with content
@@ -74,6 +82,8 @@ def map_poem_year(item):
 # The mapping_function maps one row of the input CSV (i.e. one poem) to an
 # iterator over output rows.
 mappers = {
+    'poems.csv': (('poem_id', 'collection', 'display_name',), map_poems),
+
     'verses.csv': (('poem_id', 'pos', 'verse_type', 'text'), map_verses),
 
     'refs.csv' : (('poem_id', 'ref_number', 'ref_type', 'ref'),  map_refs),
@@ -126,6 +136,7 @@ def read_inputs(filenames, prefix):
                 continue
             item = {
                 'poem_id'      : node.attrib['nro'],
+                'collection'   : 'jr',
                 'collector_id' : prefix + node.attrib['k'] \
                                  if 'k' in node.attrib else None,
                 'place_id'     : prefix + node.attrib['p'] \

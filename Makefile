@@ -61,6 +61,7 @@ $(work_dir)/jr/verses.csv:
 
 $(work_dir)/skvr/meta.csv:           $(work_dir)/skvr/verses.csv
 $(work_dir)/skvr/places.csv:         $(work_dir)/skvr/verses.csv
+$(work_dir)/skvr/poems.csv:          $(work_dir)/skvr/verses.csv
 $(work_dir)/skvr/poem_types.csv:     $(work_dir)/skvr/verses.csv
 $(work_dir)/skvr/raw_meta.csv:       $(work_dir)/skvr/verses.csv
 $(work_dir)/skvr/refs.csv:           $(work_dir)/skvr/verses.csv
@@ -83,6 +84,7 @@ $(work_dir)/skvr/poem_year.csv: $(work_dir)/skvr/meta.csv
 $(work_dir)/erab/collectors.csv:     $(work_dir)/erab/verses.csv
 $(work_dir)/erab/genres.csv:         $(work_dir)/erab/verses.csv
 $(work_dir)/erab/places.csv:         $(work_dir)/erab/verses.csv
+$(work_dir)/erab/poems.csv:          $(work_dir)/erab/verses.csv
 $(work_dir)/erab/poem_collector.csv: $(work_dir)/erab/verses.csv
 $(work_dir)/erab/poem_place.csv:     $(work_dir)/erab/verses.csv
 $(work_dir)/erab/poem_types.csv:     $(work_dir)/erab/verses.csv
@@ -93,17 +95,19 @@ $(work_dir)/erab/types.csv:          $(work_dir)/erab/verses.csv
 
 $(work_dir)/jr/raw_meta.csv:       $(work_dir)/jr/verses.csv
 $(work_dir)/jr/refs.csv:           $(work_dir)/jr/verses.csv
+$(work_dir)/jr/poems.csv:          $(work_dir)/jr/verses.csv
 $(work_dir)/jr/poem_place.csv:     $(work_dir)/jr/verses.csv
 $(work_dir)/jr/poem_collector.csv: $(work_dir)/jr/verses.csv
 $(work_dir)/jr/poem_year.csv:      $(work_dir)/jr/verses.csv
 
 $(work_dir)/kr/verses.csv:
 	mkdir -p $(work_dir)/kr
-	$(python) code/convert_skvr.py -p '' \
+	$(python) code/convert_skvr.py -p '' -c kr \
       -d $(work_dir)/kr \
 	  $(raw_dir)/kr/*.xml $(raw_dir)/kr/kanteletar/*.xml
 
 $(work_dir)/kr/meta.csv:     $(work_dir)/kr/verses.csv
+$(work_dir)/kr/poems.csv:    $(work_dir)/kr/verses.csv
 $(work_dir)/kr/raw_meta.csv: $(work_dir)/kr/verses.csv
 
 $(work_dir)/kr/collectors.csv:
@@ -169,6 +173,7 @@ combined: \
   $(DATA_DIR)/collectors.csv \
   $(DATA_DIR)/counties.geojson \
   $(DATA_DIR)/places.csv \
+  $(DATA_DIR)/poems.csv \
   $(DATA_DIR)/poem_collector.csv \
   $(DATA_DIR)/poem_place.csv \
   $(DATA_DIR)/poem_year.csv \
@@ -203,6 +208,13 @@ $(DATA_DIR)/places.csv: \
   $(work_dir)/skvr/places.csv \
   $(work_dir)/erab/places.csv \
   $(work_dir)/kr/places.csv
+	csvstack $^ > $@
+
+$(DATA_DIR)/poems.csv: \
+  $(work_dir)/skvr/poems.csv \
+  $(work_dir)/erab/poems.csv \
+  $(work_dir)/jr/poems.csv \
+  $(work_dir)/kr/poems.csv
 	csvstack $^ > $@
 
 $(DATA_DIR)/poem_collector.csv: \

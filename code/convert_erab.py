@@ -35,6 +35,14 @@ PLACE_PREFIX = {
     'parish' : 'erab_p'
 }
 
+def map_poems(item):
+    if 'metaxml' in item:
+        n_id = item['metaxml'].find('ID')
+    display_name = n_id.text if n_id is not None else None
+    yield { 'poem_id': item['poem_id'],
+            'collection': item['collection'],
+            'display_name': display_name }
+
 def map_verses(item):
 
     def _node_to_dict(node, i, prefix=''):
@@ -89,6 +97,7 @@ def map_poem_year(item):
 
 
 mappers = {
+    'poems.csv': (('poem_id', 'collection', 'display_name',), map_poems),
     'verses.csv': (('poem_id', 'pos', 'verse_type', 'text'), map_verses),
     'poem_year.csv' : (('poem_id', 'year'), map_poem_year),
     'raw_meta.csv': (('poem_id', 'field', 'value'), map_raw_meta),
@@ -256,7 +265,7 @@ def parse_arguments():
 if __name__ == '__main__':
     args = parse_arguments()
     if args.xml_files:
-        inputs = read_inputs(args.xml_files, args.prefix)
+        inputs = read_inputs(args.xml_files, args.prefix, collection='erab')
         transform_rows(inputs, mappers, output_dir=args.output_dir)
 
     if args.csv_input_dir is not None:

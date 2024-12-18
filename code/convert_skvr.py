@@ -6,6 +6,9 @@ import logging
 import os.path as P
 import re
 
+# FIXME despite the name, this script right now is made for both SKVR and KR.
+# Eventually, it will be merged with the scripts for ERAB and JR as well.
+
 from common_xml_functions import \
     elem_content_to_str, \
     insert_refnrs, \
@@ -18,10 +21,39 @@ PREFIX = 'skvr_'
 def is_county_id(place_id):
     return int(place_id.replace(PREFIX, '')) >= 9000
 
+def make_display_name(item):
+    if 'metaxml' in item:
+        n_teos = item['metaxml'].find('TEOS')
+        n_osa = item['metaxml'].find('OSA')
+        n_id = item['metaxml'].find('ID')
+    text_teos = n_teos.text if n_teos is not None else None
+    text_osa = n_osa.text if n_osa is not None else None
+    text_id = n_id.text if n_id is not None else None
+    if item['collection'] == 'skvr':
+        return 'SKVR {} {}'.format(text_osa, text_id) \
+               if text_osa is not None and text_id is not None else None
+    # FIXME For KR this is a mess -- needs to be better specified in the
+    # dataset itself (e.g. using the TEOS field more consistently).
+    elif item['collection'] == 'kr':
+        if item['poem_id'].startswith('kt'):
+            return 'Kanteletar {}:{}'.format(int(item['poem_id'][2:4]), int(item['poem_id'][4:]))
+        elif item['poem_id'].startswith('kr'):
+            return 'KR {}:{}'.format(int(item['poem_id'][2:7]), int(item['poem_id'][7:]))
+        elif text_osa is not None and text_id is not None:
+            return '{} {}'.format(text_osa, text_id)
+        elif text_teos is not None and text_id is not None:
+            return '{} {}'.format(text_teos, text_id)
+        else:
+            return None
 
 #########################################################################
 # MAPPING FUNCTIONS
 #########################################################################
+
+def map_poems(item):
+    yield { 'poem_id': item['poem_id'],
+            'collection': item['collection'] ,
+            'display_name': make_display_name(item) }
 
 def map_verses(item):
     for i, node in enumerate(item['textxml'], 1):
@@ -58,6 +90,8 @@ mappers = {
     'refs.csv' : (('poem_id', 'ref_number', 'ref_type', 'ref'),  map_refs),
 
     'meta.csv' : (('poem_id', 'year', 'place_id', 'collector_id'), map_meta),
+
+    'poems.csv' : (('poem_id', 'collection', 'display_name'), map_poems),
 
     'raw_meta.csv' : (('poem_id', 'field', 'value'),  map_raw_meta),
 }
@@ -189,7 +223,7 @@ def transform_hash(inputs, outfile, fieldnames, mapper):
         writer.writerows(mapper(inputs))
 
 
-def read_inputs(filenames, prefix):
+def read_inputs(filenames, prefix, collection):
     '''Transforms the XML files to an iterator over rows, each row
        corresponding to one ITEM.'''
     for filename in filenames:
@@ -203,6 +237,7 @@ def read_inputs(filenames, prefix):
             assert len(meta) == 1 and len(text) == 1 and len(refs) <= 1
             item = {
                 'poem_id'      : node.attrib['nro'],
+                'collection'   : collection,
                 'collector_id' : node.attrib['k'] \
                                  if 'k' in node.attrib else None,
                 'place_id'     : node.attrib['p'] \
@@ -225,6 +260,9 @@ def parse_arguments():
         '-d', '--output-dir', metavar='PATH', default='.',
         help='The directory to write output files to.')
     parser.add_argument(
+        '-c', '--collection', metavar='NAME', default='skvr',
+        help='The value to set for the collection attribute (default: skvr).')
+    parser.add_argument(
         '-p', '--prefix', metavar='PREFIX', default='skvr_',
         help='The prefix to prepend to collector, place and type IDs.')
     parser.add_argument(
@@ -246,7 +284,7 @@ if __name__ == '__main__':
     args = parse_arguments()
 
     if args.xml_files:
-        inputs = read_inputs(args.xml_files, args.prefix)
+        inputs = read_inputs(args.xml_files, args.prefix, args.collection)
         transform_rows(inputs, mappers, output_dir=args.output_dir)
 
     if args.places_file is not None:
