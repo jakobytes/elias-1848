@@ -1,5 +1,6 @@
 raw_dir = data/raw
 work_dir = data/work
+mod_dir = modifications
 filtered_dir = data/work/filtered
 
 DATA_DIR := $(if $(DATA_DIR),$(DATA_DIR),data/output)
@@ -31,6 +32,7 @@ kr: \
 ###################################################################
 # PREPROCESSING
 ###################################################################
+
 FILTER_YEAR := 1848
 
 $(filtered_dir)/skvr:
@@ -42,6 +44,13 @@ $(filtered_dir)/skvr:
 
 $(filtered_dir)/kr:
 	mkdir -p $(filtered_dir)/kr
+	cp $(mod_dir)/lonnrot_exceptions.xml $(filtered_dir)/kr/
+	cp $(raw_dir)/kr/kalevala.xml $(filtered_dir)/kr/
+	rm $(raw_dir)/kr/kr01-53.xml
+	cp $(mod_dir)/modified_kr01-53.xml $(raw_dir)/kr/ && \
+		echo
+		echo "			EXCEPTIONS APPLIED: modified_kr01-53.xml, kalevala.xml, lonnrot_exceptions.xml"
+		echo	
 	for file in $(raw_dir)/kr/*.xml $(raw_dir)/kr/kanteletar/*.xml; do \
 		$(python) code/filter_items_by_year.py "$$file" "$(filtered_dir)/kr/$$(basename $$file)" \
 		--max-year $(FILTER_YEAR); \
@@ -106,7 +115,7 @@ $(work_dir)/kr/verses.csv: $(filtered_dir)/kr
 	mkdir -p $(work_dir)/kr
 	$(python) code/convert_skvr.py -p '' -c kr \
       -d $(work_dir)/kr \
-	  $(filtered_dir)/kr/*.xml $(filtered_dir)/kr/kanteletar/*.xml
+	  $(filtered_dir)/kr/*.xml
 
 $(work_dir)/kr/meta.csv:     $(work_dir)/kr/verses.csv
 $(work_dir)/kr/poems.csv:    $(work_dir)/kr/verses.csv
