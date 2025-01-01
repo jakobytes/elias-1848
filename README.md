@@ -32,7 +32,7 @@ The modifications to create the subset are as follows:
 - Filtered the corpus by XML-metadata using filter_by_year.py to filter by
   attribute "y" (year) in tag in <ITEM> to only include items where y < 1849.
   The processed files are created in data/work/filtered.
-- Ran lonnrot_exceptions.py on data/raw/kr/kr01-53.xml to include the folowing in the
+- Run lonnrot_exceptions.py on data/raw/kr/kr01-53.xml to include the following in the
   final corpus. They consist of material that E. Lönnrot had in 1948 but were
   published by him at a later date. (COPIED THE OUTPUT MANUALLY to data/work/filtered/kr)
   - Kalevala (1849)
