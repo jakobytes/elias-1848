@@ -1,11 +1,35 @@
-# FILTER pipeline
+# ELIAS 1848 pipeline
 
 This repository contains a set of scripts for creating the corpus and
-database used in the [FILTER project](https://blogs.helsinki.fi/filter-project/).
-The corpus is a compilation of four folk poetry collections, of which
-at the moment two are public and two non-public.
-The pipeline produces a set of tables in CSV format that is stored in
-[hsci-r/filter-data](https://github.com/hsci-r/filter-data).
+database used ELIAS 1848. It is a modification of the
+pipeline, database creation, and web-interface used in the
+[FILTER project](https://blogs.helsinki.fi/filter-project/).
+The corpus is a compilation of three folk poetry collections,that
+are made publicly available by the [Finnish Litterature Society on
+GitHub](https://github.com/sks190).
+
+The aim of this project is to harness the tools created by [Maciej
+Janicki](https://github.com/maciejjan) to analyse a subset of the
+corpus used in the FILTER project. The subset consists of the
+poems recorded before the publication of Kalevala in 1849 to
+reveal how Elias Lönnrot processed the collected poems he had access
+to when composing the Kalevala epic. The number of recorded poems
+before 1849 in the database is 21919. This is roughly 10% of the 
+original dataset.
+
+The modifications to create the subset are as follows:
+- Removed the Estonian poem corpus by:
+  - dropping the ERAB corpus submodule from the pipeline.
+  [Estonian poems from Eesti regilaulude](https://github.com/rahvaluule/erab)
+  - dropping Kalevipoeg from literary sources (KR)
+korjattu "Lisiä vanhaan Kalevalaan" vuodeksi 1848
+tämän jälkeen rajattu korpus metatietojen perusteella y<1849
+rajattuun aineistoon lisätty poikkeukset: Kalevala, Loitsut, Sananlaskut
+ajettu uusi korpus filter-pipelinen läpi ja laskettu uudet similariteeti ja klusterointiarvot
+
+
+The pipeline reads a set of XML-files and produces a set of tables 
+in CSV format to be processed into a database in a later step.
 
 ## Installation and running
 
