@@ -116,7 +116,7 @@ A working interface for demonstration purposes exists here:
 The code published in this repository is licensed under the MIT license. The creator(s) and
 hosts of the original code and text-corpora must be duly credited. The code here isn't made
 to harm you or your computer in any way, but any responsibility of running the code is
-yours, and if if something breaks I take <b>no liability</> for it.
+yours. If if something breaks I take <b>no liability</b> for it.
 
 For the folk poetry materials linked as submodules, see the information
 in their repositories.
