@@ -34,7 +34,7 @@ The modifications to create the subset are as follows:
   The processed files are created in data/work/filtered.
 - Run lonnrot_exceptions.py on data/raw/kr/kr01-53.xml to include the following in the
   final corpus. They consist of material that E. Lönnrot had in 1948 but were
-  published by him at a later date. (COPIED THE OUTPUT MANUALLY to data/work/filtered/kr)
+  published by him at a later date.
   - Kalevala (1849)
   - Elias Lönnrot : Suomen Kansan arwoituksia ynnä 189 Wiron arwoituksen kanssa (1851)
   - Suomen Kansan Muinaisia Loitsurunoja toimittanut Elias Lönnrot (1880)
@@ -78,9 +78,10 @@ environment. It must be installed separately using your package manager of choic
 
 ### Sources and preprocessing
 
-Execute `make combined` to run the preprocessing step.
+Execute `make combined` to run the preprocessing step. The process starts by
+patching the original process to include the exceptions noted above.
 
-The corpus consists of four collections, which are linked as submodules in
+The corpus consists of three collections, which are linked as submodules in
 `data/raw`:
 * [Suomen Kansan Vanhat Runot (SKVR)](https://github.com/sks190/SKVR) (public)
 * [Julkaisemattomat Runot (JR)](https://github.com/sks190/jr) (public)
@@ -93,7 +94,7 @@ A description of the format of the source files can be found [here](./data/raw/R
 To compute similarity and clustering for the new corpus, one must run some Makefile targets
 manually. The calculations are optimised for GPU-processing and require some
 calculation power. Running without GPU is possible but requires modifications in
-processing and is not covered here.
+processing and is not covered here. On an elderly GTX-1070 the process took about an hour in all.
 
 ### Other scripts
 
