@@ -101,13 +101,22 @@ processing and is not covered here. On an elderly GTX-1070 the process took abou
 The file runoregi_pages.tsv needs to be created manually with "make $DATA_DIR/runoregi_pages.tsv".
 It creates a table of text-data for the runoregi-interface.
 
+## After processing
+
+The tools to create a (MariaDB) database can be found in [hsci-r/filter-pipeline](https://github.com/hsci-r/filter-pipeline).
+For a Postgres-db, which, for the life of me, I can't understand why I did, you can find a pre-made one [here.](https://github.com/jakobytes/elias_pg_dump)
+The original web-app to use as an interface for the database can be found at [hsci-r/runoregi].(https://github.com/hsci-r/runoregi)
+The Postgres-query-modified interface is here: [jakobytes/postgres_regi](https://github.com/jakobytes/postgres_regi)
+
+A working interface for demonstration purposes exists here:
+[Elias 1848 app](https://elias-1848-a4b9ac0b37f7.herokuapp.com)
 
 ## Copyright note
 
 The code published in this repository is licensed under the MIT license. The creator(s) and
 hosts of the original code and text-corpora must be duly credited. The code here isn't made
-to harm you or your computer in any way, but any responsibility of running this code is
-yours. Assessing the consequences is the users responsibility.
+to harm you or your computer in any way, but any responsibility of running the code is
+yours, and if if something breaks I take <b>no liability</> for it.
 
 For the folk poetry materials linked as submodules, see the information
 in their repositories.
