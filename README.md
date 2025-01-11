@@ -9,7 +9,7 @@ are made publicly available by the [Finnish Literature Society on
 GitHub](https://github.com/sks190).
 
 The pipeline reads a set of XML-files and produces a set of tables 
-in CSV format to be processed into a database in a later step.
+in CSV-format, to be processed into a database in a later step.
 
 The aim of this project is to harness the tools created by [Maciej
 Janicki](https://github.com/maciejjan) to analyse a subset of the
@@ -42,21 +42,21 @@ The modifications to create the subset are as follows:
 ## Installation and running
 
 NOTE TO SELF: The "sed" command used in the Makefile is for gnu-sed. *Macs run
-on BSDLinux* and hence use a different flavour of sed, which is *incompatible* 
-with the commands in the Makefile. I ended up running "make" in a VM, but it
-is possible to switch to using gnu-sed or do some porting.
+on BSDLinux* and use a different flavour of sed, which is *incompatible* 
+with the script in the Makefile. It is possible to switch to using gnu-sed on
+Mac, but I ended up running it on a Linux-VM for convenience.
 
 After cloning this repository, initialise the Git submodules for the
 source data using the command:
 ```
 git submodule update --init --recursive
 ```
-CURRENTLY THE MODIFIED kr01-53.xml MUST BE COPIED MANUALLY TO REPLACE
+~~ CURRENTLY THE MODIFIED kr01-53.xml MUST BE COPIED MANUALLY TO REPLACE
 THE VERSION IN data/raw/kr. ALSO MANUALLY DELETE kalevipoeg.xml.
-THIS WILL BE AUTOMATED ONCE I'M SURE THAT STUFF WORK AS INTENDED.
+THIS WILL BE AUTOMATED ONCE I'M SURE THAT STUFF WORK AS INTENDED.~~ 
 
 Further, install the Python dependencies. The preferred way of doing it
-is through Anaconda - use the environment file `env.yml`. Unless you
+is through Anaconda; use the environment file `env.yml`. Unless you
 REALLY wan't to know the underpinnings of installed packages in your OS, just do it.
 
 The different steps of the pipeline are called using GNU Make. The
@@ -69,7 +69,7 @@ DATA_DIR=/path/to/filter-data make combined
 Alternatively you can create environment variables in your OS e.g.
 "export DATA_DIR=/path/to/filter-data" or, even better, add it to
 the Conda environment with "conda env convig vars set DATA_DIR=/path/to/filter-data".
-As these differ from user, computer and case, I decided against hardcoding those.
+As these differ from user and case, I decided against hardcoding these.
 
 Also the tool *jq* for processing json-files is currently missing from the
 environment. It must be installed separately using your package manager of choice.
@@ -104,7 +104,7 @@ It creates a table of text-data for the runoregi-interface.
 ## Copyright note
 
 The code published in this repository is licensed under the MIT license. The creator(s) and
-hosts of the original code and text-corpora must be credited. The code here isn't made
+hosts of the original code and text-corpora must be duly credited. The code here isn't made
 to harm you or your computer in any way, but any responsibility of running this code is
 yours. Assessing the consequences is the users responsibility.
 
