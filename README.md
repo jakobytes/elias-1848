@@ -51,9 +51,9 @@ source data using the command:
 ```
 git submodule update --init --recursive
 ```
-~~ CURRENTLY THE MODIFIED kr01-53.xml MUST BE COPIED MANUALLY TO REPLACE
+<del> CURRENTLY THE MODIFIED kr01-53.xml MUST BE COPIED MANUALLY TO REPLACE
 THE VERSION IN data/raw/kr. ALSO MANUALLY DELETE kalevipoeg.xml.
-THIS WILL BE AUTOMATED ONCE I'M SURE THAT STUFF WORK AS INTENDED.~~ 
+THIS WILL BE AUTOMATED ONCE I'M SURE THAT STUFF WORK AS INTENDED.</del>
 
 Further, install the Python dependencies. The preferred way of doing it
 is through Anaconda; use the environment file `env.yml`. Unless you
