@@ -3,6 +3,11 @@ work_dir = data/work
 mod_dir = modifications
 filtered_dir = data/work/filtered
 
+# Check for filtered variants in modifications folder
+themefile := $(if $(wildcard $(mod_dir)/themetree_filtered.json),$(mod_dir)/themetree_filtered.json,$(raw_dir)/skvr/themetree.json)
+poemtypesfile := $(if $(wildcard $(mod_dir)/viitteet_filtered.txt),$(mod_dir)/viitteet_filtered.txt,$(raw_dir)/skvr/viitteet_180221.txt)
+pagesfile := $(if $(wildcard $(mod_dir)/runoregi_pages_filtered.json),$(mod_dir)/runoregi_pages_filtered.json,$(raw_dir)/runoregi_pages.json)
+
 DATA_DIR := $(if $(DATA_DIR),$(DATA_DIR),data/output)
 
 python = python3
@@ -69,8 +74,8 @@ $(work_dir)/skvr/verses.csv: $(filtered_dir)/skvr
       -d $(work_dir)/skvr \
       --places-file $(raw_dir)/skvr/places.csv \
       --xml-types-file $(raw_dir)/skvr/tyyppiluettelo.xml \
-      --json-types-file $(raw_dir)/skvr/themetree.json \
-      --poem-types-file $(raw_dir)/skvr/viitteet_180221.txt \
+      --json-types-file $(themefile) \
+      --poem-types-file $(poemtypesfile) \
 	  $(filtered_dir)/skvr/skvr_*.xml
 
 $(work_dir)/jr/verses.csv: $(filtered_dir)/jr
@@ -272,7 +277,7 @@ $(DATA_DIR)/refs.csv: \
   $(work_dir)/jr/refs.csv
 	csvstack $^ > $@
 
-$(DATA_DIR)/runoregi_pages.tsv: $(raw_dir)/runoregi_pages.json
+$(DATA_DIR)/runoregi_pages.tsv: $(pagesfile)
 	jq -r '.[] | [.view, .position, .title, (.helptext | join("\n")),'\
 	'             (.content | join("\n"))] | @tsv' $< > $@
 
