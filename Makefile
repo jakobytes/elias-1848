@@ -1,7 +1,14 @@
-raw_dir = data/raw
-work_dir = data/work
-mod_dir = modifications
-filtered_dir = data/work/filtered
+# --- Settings ----------------------------------------------------------------
+# Fail a recipe if any command in a pipeline fails, and delete half-written
+# targets on error or timeout, so a truncated file is never taken as finished.
+SHELL := /bin/bash
+.SHELLFLAGS := -eo pipefail -c
+.DELETE_ON_ERROR:
+
+raw_dir ?= data/raw
+work_dir ?= data/work
+mod_dir ?= modifications
+filtered_dir ?= $(work_dir)/filtered
 
 # Check for filtered variants in modifications folder
 themefile := $(if $(wildcard $(mod_dir)/themetree_filtered.json),$(mod_dir)/themetree_filtered.json,$(raw_dir)/skvr/themetree.json)
@@ -11,6 +18,25 @@ pagesfile := $(if $(wildcard $(mod_dir)/runoregi_pages_filtered.json),$(mod_dir)
 DATA_DIR := $(if $(DATA_DIR),$(DATA_DIR),data/output)
 
 python = python3
+
+# GPU switch for shortsim-ngrcos and poem_sim.py. Set GPU_FLAG= to run on CPU.
+GPU_FLAG ?= -g
+
+.PHONY: preprocess skvr jr kr combined cpu-stage gpu-stage verse_sim poem_sim
+
+# --- Stages ------------------------------------------------------------------
+cpu-stage: preprocess combined
+
+gpu-stage: verse_sim poem_sim
+
+verse_sim: \
+  $(DATA_DIR)/v_sim.tsv \
+  $(DATA_DIR)/v_clust.tsv \
+  $(DATA_DIR)/v_clusterings.csv
+
+poem_sim: \
+  $(DATA_DIR)/p_sim.csv \
+  $(DATA_DIR)/p_clust.tsv
 
 preprocess: skvr jr kr
 
@@ -35,50 +61,73 @@ kr: \
   $(work_dir)/kr/word_occ.csv
 
 ###################################################################
-# PREPROCESSING
+# YEAR FILTERING
 ###################################################################
 
 FILTER_YEAR := 1848
 
-$(filtered_dir)/skvr:
-	mkdir -p $(filtered_dir)/skvr
-	for file in $(raw_dir)/skvr/skvr_*.xml; do \
-		$(python) code/filter_items_by_year.py "$$file" "$(filtered_dir)/skvr/$$(basename $$file)" \
-		--max-year $(FILTER_YEAR); \
-	done
+# Each corpus is filtered into its own directory. A stamp file marks a
+# completed run: an interrupted run leaves no stamp and is redone, and the
+# filtering is repeated when a raw file, a modification or the script changes.
 
-$(filtered_dir)/kr:
-	mkdir -p $(filtered_dir)/kr
-	cp $(mod_dir)/lonnrot_exceptions.xml $(filtered_dir)/kr/
-	cp $(raw_dir)/kr/kalevala.xml $(filtered_dir)/kr/
-	rm $(raw_dir)/kr/kr01-53.xml
-	cp $(mod_dir)/modified_kr01-53.xml $(raw_dir)/kr/ && \
-		echo
-		echo "			EXCEPTIONS APPLIED: modified_kr01-53.xml, kalevala.xml, lonnrot_exceptions.xml"
-		echo	
-	for file in $(raw_dir)/kr/*.xml $(raw_dir)/kr/kanteletar/*.xml; do \
-		$(python) code/filter_items_by_year.py "$$file" "$(filtered_dir)/kr/$$(basename $$file)" \
-		--max-year $(FILTER_YEAR); \
-	done
+skvr_raw := $(wildcard $(raw_dir)/skvr/skvr_*.xml)
+jr_raw   := $(wildcard $(raw_dir)/jr/*.xml)
+# KR: kr01-53.xml is replaced by the modified version in $(mod_dir),
+# Kalevipoeg is dropped (Estonian material), and kalevala.xml is not
+# filtered at all (it is included whole, see below).
+# The raw submodule is left untouched.
+kr_dropped := $(wildcard $(raw_dir)/kr/kalevipoeg*.xml $(raw_dir)/kr/kanteletar/kalevipoeg*.xml)
+kr_raw   := $(filter-out $(raw_dir)/kr/kr01-53.xml $(raw_dir)/kr/kalevala.xml $(kr_dropped), \
+              $(wildcard $(raw_dir)/kr/*.xml $(raw_dir)/kr/kanteletar/*.xml)) \
+            $(mod_dir)/modified_kr01-53.xml
+# Included without year filtering: the entire Kalevala, and the works
+# Lönnrot possessed but that were published later.
+kr_exceptions := $(raw_dir)/kr/kalevala.xml $(mod_dir)/lonnrot_exceptions.xml
 
-$(filtered_dir)/jr:
-	mkdir -p $(filtered_dir)/jr
-	for file in $(raw_dir)/jr/*.xml; do \
-		$(python) code/filter_items_by_year.py "$$file" "$(filtered_dir)/jr/$$(basename $$file)" \
-		--max-year $(FILTER_YEAR); \
+$(filtered_dir)/skvr.stamp: $(skvr_raw) code/filter_items_by_year.py
+	rm -rf $(filtered_dir)/skvr && mkdir -p $(filtered_dir)/skvr
+	for file in $(skvr_raw); do \
+	  $(python) code/filter_items_by_year.py "$$file" \
+	    "$(filtered_dir)/skvr/$$(basename $$file)" --max-year $(FILTER_YEAR); \
 	done
+	touch $@
 
-$(work_dir)/skvr/verses.csv: $(filtered_dir)/skvr
+$(filtered_dir)/jr.stamp: $(jr_raw) code/filter_items_by_year.py
+	rm -rf $(filtered_dir)/jr && mkdir -p $(filtered_dir)/jr
+	for file in $(jr_raw); do \
+	  $(python) code/filter_items_by_year.py "$$file" \
+	    "$(filtered_dir)/jr/$$(basename $$file)" --max-year $(FILTER_YEAR); \
+	done
+	touch $@
+
+# Corpus = all KR poems with y < 1849 + the exception files in full.
+# (In the original Makefile kalevala.xml was copied first and then
+# overwritten by its filtered version, so the exception had no effect.)
+$(filtered_dir)/kr.stamp: $(kr_raw) $(kr_exceptions) code/filter_items_by_year.py
+	rm -rf $(filtered_dir)/kr && mkdir -p $(filtered_dir)/kr
+	for file in $(kr_raw); do \
+	  $(python) code/filter_items_by_year.py "$$file" \
+	    "$(filtered_dir)/kr/$$(basename $$file)" --max-year $(FILTER_YEAR); \
+	done
+	cp $(kr_exceptions) $(filtered_dir)/kr/
+	@echo "EXCEPTIONS APPLIED: modified_kr01-53.xml, kalevala.xml, lonnrot_exceptions.xml"
+	touch $@
+
+###################################################################
+# PREPROCESSING
+###################################################################
+
+$(work_dir)/skvr/verses.csv: $(filtered_dir)/skvr.stamp
 	mkdir -p $(work_dir)/skvr
 	$(python) code/convert_skvr.py \
-      -d $(work_dir)/skvr \
-      --places-file $(raw_dir)/skvr/places.csv \
-      --xml-types-file $(raw_dir)/skvr/tyyppiluettelo.xml \
-      --json-types-file $(themefile) \
-      --poem-types-file $(poemtypesfile) \
+	  -d $(work_dir)/skvr \
+	  --places-file $(raw_dir)/skvr/places.csv \
+	  --xml-types-file $(raw_dir)/skvr/tyyppiluettelo.xml \
+	  --json-types-file $(themefile) \
+	  --poem-types-file $(poemtypesfile) \
 	  $(filtered_dir)/skvr/skvr_*.xml
 
-$(work_dir)/jr/verses.csv: $(filtered_dir)/jr
+$(work_dir)/jr/verses.csv: $(filtered_dir)/jr.stamp
 	mkdir -p $(work_dir)/jr
 	$(python) code/convert_jr.py \
 	  -d $(work_dir)/jr $(filtered_dir)/jr/*.xml
@@ -98,7 +147,7 @@ $(work_dir)/skvr/xmltypes.csv:       $(work_dir)/skvr/verses.csv
 
 $(work_dir)/skvr/collectors.csv: $(raw_dir)/skvr/collectors.csv
 	mkdir -p $(work_dir)/skvr
-	sed '1s/.*/collector_id,collector_name/;' $< > $@
+	csvcut -c 1,2 $< | sed '1s/.*/collector_id,collector_name/;' > $@
 
 $(work_dir)/skvr/poem_place.csv: $(work_dir)/skvr/meta.csv
 	csvcut -c poem_id,place_id $< > $@
@@ -116,17 +165,19 @@ $(work_dir)/jr/poem_place.csv:     $(work_dir)/jr/verses.csv
 $(work_dir)/jr/poem_collector.csv: $(work_dir)/jr/verses.csv
 $(work_dir)/jr/poem_year.csv:      $(work_dir)/jr/verses.csv
 
-$(work_dir)/kr/verses.csv: $(filtered_dir)/kr
+$(work_dir)/kr/verses.csv: $(filtered_dir)/kr.stamp
 	mkdir -p $(work_dir)/kr
 	$(python) code/convert_skvr.py -p '' -c kr \
-      -d $(work_dir)/kr \
+	  -d $(work_dir)/kr \
 	  $(filtered_dir)/kr/*.xml
 
 $(work_dir)/kr/meta.csv:     $(work_dir)/kr/verses.csv
 $(work_dir)/kr/poems.csv:    $(work_dir)/kr/verses.csv
 $(work_dir)/kr/raw_meta.csv: $(work_dir)/kr/verses.csv
 
-$(work_dir)/kr/collectors.csv:
+# Copy rules: the raw file is a prerequisite only when it exists, so editing
+# it triggers a rebuild, while a missing file still yields a header-only table.
+$(work_dir)/kr/collectors.csv: $(wildcard $(raw_dir)/kr/collectors.csv)
 	mkdir -p $(work_dir)/kr
 	( [ -f "$(raw_dir)/kr/collectors.csv" ] \
 	  && cp $(raw_dir)/kr/collectors.csv $@ ) \
@@ -138,7 +189,7 @@ $(work_dir)/kr/poem_place.csv: $(work_dir)/kr/meta.csv
 $(work_dir)/kr/poem_collector.csv: $(work_dir)/kr/meta.csv
 	csvcut -c poem_id,collector_id $< | csvgrep -c collector_id -r '^.+$$' > $@
 
-$(work_dir)/kr/poem_types.csv:
+$(work_dir)/kr/poem_types.csv: $(wildcard $(raw_dir)/kr/kanteletar/poem_category.csv)
 	mkdir -p $(work_dir)/kr
 	( [ -f "$(raw_dir)/kr/kanteletar/poem_category.csv" ] \
 	  && cp $(raw_dir)/kr/kanteletar/poem_category.csv $@ ) \
@@ -147,13 +198,13 @@ $(work_dir)/kr/poem_types.csv:
 $(work_dir)/kr/poem_year.csv: $(work_dir)/kr/meta.csv
 	csvcut -c poem_id,year $< | csvgrep -c year -r '^.+$$' > $@
 
-$(work_dir)/kr/places.csv:
+$(work_dir)/kr/places.csv: $(wildcard $(raw_dir)/kr/places.csv)
 	mkdir -p $(work_dir)/kr
 	( [ -f "$(raw_dir)/kr/places.csv" ] \
 	  && cp $(raw_dir)/kr/places.csv $@ ) \
 	|| ( echo "place_id,place_name,place_type,place_parent_id" > $@ )
 
-$(work_dir)/kr/types.csv:
+$(work_dir)/kr/types.csv: $(wildcard $(raw_dir)/kr/kanteletar/categories.csv)
 	mkdir -p $(work_dir)/kr
 	( [ -f "$(raw_dir)/kr/kanteletar/categories.csv" ] \
 	  && cp $(raw_dir)/kr/kanteletar/categories.csv $@ ) \
@@ -179,10 +230,6 @@ $(work_dir)/%/word_occ.csv: $(work_dir)/%/verses_cl.csv
 
 # In the standard case, the combined tables are just concatenations
 # of the tables for the individual subcorpora (using csvstack).
-# Exceptions to this rule should be very rare and small.
-
-# TODO provide for the possibility that the private repositories are empty
-# (making a version using just the public data)
 
 combined: \
   $(DATA_DIR)/areas.geojson \
@@ -203,11 +250,13 @@ combined: \
   $(DATA_DIR)/word_occ.csv
 
 $(DATA_DIR)/areas.geojson: $(raw_dir)/areas.geojson
+	mkdir -p $(DATA_DIR)
 	cp $< $@
 
 $(DATA_DIR)/collectors.csv: \
   $(work_dir)/skvr/collectors.csv \
   $(work_dir)/kr/collectors.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/counties.geojson: \
@@ -222,35 +271,41 @@ $(DATA_DIR)/counties.geojson: \
 $(DATA_DIR)/places.csv: \
   $(work_dir)/skvr/places.csv \
   $(work_dir)/kr/places.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/poems.csv: \
   $(work_dir)/skvr/poems.csv \
   $(work_dir)/jr/poems.csv \
   $(work_dir)/kr/poems.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/poem_collector.csv: \
   $(work_dir)/skvr/poem_collector.csv \
   $(work_dir)/jr/poem_collector.csv \
   $(work_dir)/kr/poem_collector.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/poem_place.csv: \
   $(work_dir)/skvr/poem_place.csv \
   $(work_dir)/jr/poem_place.csv \
   $(work_dir)/kr/poem_place.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/poem_types.csv: \
   $(work_dir)/skvr/poem_types.csv \
   $(work_dir)/kr/poem_types.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/poem_year.csv: \
   $(work_dir)/skvr/poem_year.csv \
   $(work_dir)/jr/poem_year.csv \
   $(work_dir)/kr/poem_year.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/polygon_to_place.csv: \
@@ -270,14 +325,17 @@ $(DATA_DIR)/raw_meta.csv: \
   $(work_dir)/skvr/raw_meta.csv \
   $(work_dir)/jr/raw_meta.csv \
   $(work_dir)/kr/raw_meta.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/refs.csv: \
   $(work_dir)/skvr/refs.csv \
   $(work_dir)/jr/refs.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/runoregi_pages.tsv: $(pagesfile)
+	mkdir -p $(DATA_DIR)
 	jq -r '.[] | [.view, .position, .title, (.helptext | join("\n")),'\
 	'             (.content | join("\n"))] | @tsv' $< > $@
 
@@ -286,26 +344,30 @@ $(DATA_DIR)/runoregi_pages.tsv: $(pagesfile)
 $(DATA_DIR)/types.csv: \
   $(work_dir)/skvr/types.csv \
   $(work_dir)/kr/types.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ \
 	| csvcut -c type_id,type_name,type_description,type_parent_id > $@
-	python3 code/add_type_links.py $@ -t 0.7
+	$(python) code/add_type_links.py $@ -t 0.7
 
 $(DATA_DIR)/verses.csv: \
   $(work_dir)/skvr/verses.csv \
   $(work_dir)/jr/verses.csv \
   $(work_dir)/kr/verses.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/verses_cl.csv: \
   $(work_dir)/skvr/verses_cl.csv \
   $(work_dir)/jr/verses_cl.csv \
   $(work_dir)/kr/verses_cl.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 $(DATA_DIR)/word_occ.csv: \
   $(work_dir)/skvr/word_occ.csv \
   $(work_dir)/jr/word_occ.csv \
   $(work_dir)/kr/word_occ.csv
+	mkdir -p $(DATA_DIR)
 	csvstack $^ > $@
 
 ###################################################################
@@ -317,13 +379,13 @@ $(work_dir)/verse_sim/verses_cl.list.txt: $(DATA_DIR)/verses_cl.csv
 	csvcut -c text $< | tail -n +2 | sort -u | sed '/^\s*$$/d' > $@
 
 $(DATA_DIR)/v_sim.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
-	shortsim-ngrcos -t 0.75 -g -p -d 450 < $< > $@
+	shortsim-ngrcos -t 0.75 $(GPU_FLAG) -p -d 450 < $< > $@
 
 $(work_dir)/v_sim.sqrt.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
-	shortsim-ngrcos -w sqrt -t 0.75 -g -p -d 450 < $< > $@
+	shortsim-ngrcos -w sqrt -t 0.75 $(GPU_FLAG) -p -d 450 < $< > $@
 
 $(work_dir)/v_sim.binary.tsv: $(work_dir)/verse_sim/verses_cl.list.txt
-	shortsim-ngrcos -w binary -t 0.75 -g -p -d 450 < $< > $@
+	shortsim-ngrcos -w binary -t 0.75 $(GPU_FLAG) -p -d 450 < $< > $@
 
 $(work_dir)/verse_sim/v_clust.default.tsv: \
   $(work_dir)/verse_sim/verses_cl.list.txt \
@@ -382,6 +444,7 @@ $(DATA_DIR)/v_clust.tsv: \
 	sed 's/^/5\t/' $(work_dir)/verse_sim/v_clust.tight-binary.tsv >> $@
 
 $(DATA_DIR)/v_clusterings.csv:
+	mkdir -p $(DATA_DIR)
 	echo 'clustering_id,name,description' > $@
 	echo '0,default,' >> $@
 	echo '1,sqrt,"sqrt weighting"' >> $@
@@ -401,7 +464,7 @@ $(work_dir)/verses_cl_by_length.csv: $(DATA_DIR)/verses_cl.csv
 	$(python) code/sort_poems_by_length.py < $< > $@
 
 $(DATA_DIR)/p_sim.csv: $(work_dir)/verses_cl_by_length.csv
-	$(python) code/poem_sim.py -t 0.5 -p -r -g -d 450 -i $< -o $@ \
+	$(python) code/poem_sim.py -t 0.5 -p -r $(GPU_FLAG) -d 450 -i $< -o $@ \
 	  --sim-raw-thr 1 --sim-onesided-thr 0.1 --sim-sym-thr 0 \
 	  -L DEBUG --logfile $(work_dir)/poem_sim.log
 
@@ -412,4 +475,3 @@ $(DATA_DIR)/p_clust.tsv: $(DATA_DIR)/p_sim.csv
 	echo | cat $(work_dir)/p_sim.nodes.tsv - $(work_dir)/p_sim.edges.tsv \
 	| shortsim-cluster -s 0.1 > $@
 	rm $(work_dir)/p_sim.nodes.tsv $(work_dir)/p_sim.edges.tsv
-
